@@ -81,12 +81,13 @@ public:
 
     QSurface::SurfaceType windowSurfaceType() const override;
 
-    QAnimationDriver *animationDriver() const override { return 0; }
+    QAnimationDriver *animationDriver() const override;
 
     QSGContext *sceneGraphContext() const override;
     QSGRenderContext *createRenderContext(QSGContext *) const override { return rc; }
 
     struct WindowData {
+        QQuickWindow *window;
         bool updatePending : 1;
         bool grabOnly : 1;
     };
@@ -98,6 +99,16 @@ public:
     QSGRenderContext *rc;
 
     QImage grabContent;
+
+    QAnimationDriver *m_anim;
+
+
+public Q_SLOTS:
+    void onAnimationStarted();
+    void onAnimationStopped();
+
+private:
+    void startOrStopAnimationTimer();
 };
 
 QT_END_NAMESPACE
