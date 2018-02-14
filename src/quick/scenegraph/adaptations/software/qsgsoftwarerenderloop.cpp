@@ -57,6 +57,11 @@ QSGSoftwareRenderLoop::QSGSoftwareRenderLoop()
 {
     sg = new QSGSoftwareContext();
     rc = sg->createRenderContext();
+
+    m_anim = sg->createAnimationDriver(this);
+    connect(m_anim, &QAnimationDriver::started, this, &QSGSoftwareRenderLoop::onAnimationStarted);
+    connect(m_anim, &QAnimationDriver::stopped, this, &QSGSoftwareRenderLoop::onAnimationStopped);
+    m_anim->install();
 }
 
 QSGSoftwareRenderLoop::~QSGSoftwareRenderLoop()
@@ -65,11 +70,52 @@ QSGSoftwareRenderLoop::~QSGSoftwareRenderLoop()
     delete sg;
 }
 
+
+void QSGSoftwareRenderLoop::onAnimationStarted()
+{
+    // startOrStopAnimationTimer();
+
+    for (const WindowData &w : qAsConst(m_windows))
+        w.window->requestUpdate();
+}
+
+void QSGSoftwareRenderLoop::onAnimationStopped()
+{
+    // startOrStopAnimationTimer();
+}
+
+
+void QSGSoftwareRenderLoop::startOrStopAnimationTimer()
+{
+    // int exposedWindowCount = 0;
+    // const WindowData *exposed = nullptr;
+
+    // for (int i = 0; i < m_windows.size(); ++i) {
+    //     const WindowData &w(m_windows[i]);
+    //     if (w.window->isVisible() && w.window->isExposed()) {
+    //         ++exposedWindowCount;
+    //         exposed = &w;
+    //     }
+    // }
+
+    // if (animationTimer && (exposedWindowCount == 1 || !m_anim->isRunning())) {
+    //     killTimer(animationTimer);
+    //     animationTimer = 0;
+    //     // If animations are running, make sure we keep on animating
+    //     if (m_anim->isRunning())
+    //         exposed->window->requestUpdate();
+    // } else if (!animationTimer && exposedWindowCount != 1 && m_anim->isRunning()) {
+    //     animationTimer = startTimer(qsgrl_animation_interval());
+    // }
+}
+
+
 void QSGSoftwareRenderLoop::show(QQuickWindow *window)
 {
     WindowData data;
     data.updatePending = false;
     data.grabOnly = false;
+    data.window = window;
     m_windows[window] = data;
 
     if (m_backingStores[window] == nullptr) {
@@ -201,6 +247,12 @@ void QSGSoftwareRenderLoop::renderWindow(QQuickWindow *window, bool isNewExpose)
         lastFrameTime = QTime::currentTime();
     }
 
+    if (m_anim->isRunning()) {
+        m_anim->advance();
+        window->requestUpdate();
+    }
+        
+    
     // Might have been set during syncSceneGraph()
     if (data.updatePending)
         maybeUpdate(window);
@@ -268,6 +320,12 @@ void QSGSoftwareRenderLoop::handleUpdateRequest(QQuickWindow *window)
 {
     renderWindow(window);
 }
+
+QAnimationDriver *QSGSoftwareRenderLoop::animationDriver() const
+{
+    return m_anim;
+}
+
 
 QT_END_NAMESPACE
 
