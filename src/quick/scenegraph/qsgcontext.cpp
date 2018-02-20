@@ -129,7 +129,6 @@ public:
     {
         QScreen *screen = QGuiApplication::primaryScreen();
         if (screen && !qsg_useConsistentTiming()) {
-            // If refresh rate isn't reported properly, think about hard coding it here
             m_vsync = 1000.0 / screen->refreshRate();
             if (m_vsync <= 0)
                 m_mode = TimerMode;

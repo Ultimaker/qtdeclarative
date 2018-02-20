@@ -106,9 +106,6 @@ public:
 public Q_SLOTS:
     void onAnimationStarted();
     void onAnimationStopped();
-
-private:
-    void startOrStopAnimationTimer();
 };
 
 QT_END_NAMESPACE
