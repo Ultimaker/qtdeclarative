@@ -59,6 +59,10 @@ QSGSoftwareRenderLoop::QSGSoftwareRenderLoop()
     sg = new QSGSoftwareContext();
     rc = sg->createRenderContext();
 
+    // Create a QSGAnimationDriver. In the original Qt code, no animation driver was created for the software render loop.
+    // This caused a default timer-only based animation driver to be used. Timer based driving is almost never in sync with
+    // the actual refresh rate and this caused hickups in animations/transitions. The QSGAnimationDriver locks into the vsync
+    // if not too many frames are dropped.
     m_anim = sg->createAnimationDriver(this);
     connect(m_anim, &QAnimationDriver::started, this, &QSGSoftwareRenderLoop::onAnimationStarted);
     connect(m_anim, &QAnimationDriver::stopped, this, &QSGSoftwareRenderLoop::onAnimationStopped);
@@ -74,42 +78,14 @@ QSGSoftwareRenderLoop::~QSGSoftwareRenderLoop()
 
 void QSGSoftwareRenderLoop::onAnimationStarted()
 {
-    // startOrStopAnimationTimer();
-
+    // simplified handling of animation started, inspired by QSGSoftwareThreadedRenderLoop
     for (const WindowData &w : qAsConst(m_windows))
         w.window->requestUpdate();
 }
 
 void QSGSoftwareRenderLoop::onAnimationStopped()
 {
-    // startOrStopAnimationTimer();
 }
-
-
-void QSGSoftwareRenderLoop::startOrStopAnimationTimer()
-{
-    // int exposedWindowCount = 0;
-    // const WindowData *exposed = nullptr;
-
-    // for (int i = 0; i < m_windows.size(); ++i) {
-    //     const WindowData &w(m_windows[i]);
-    //     if (w.window->isVisible() && w.window->isExposed()) {
-    //         ++exposedWindowCount;
-    //         exposed = &w;
-    //     }
-    // }
-
-    // if (animationTimer && (exposedWindowCount == 1 || !m_anim->isRunning())) {
-    //     killTimer(animationTimer);
-    //     animationTimer = 0;
-    //     // If animations are running, make sure we keep on animating
-    //     if (m_anim->isRunning())
-    //         exposed->window->requestUpdate();
-    // } else if (!animationTimer && exposedWindowCount != 1 && m_anim->isRunning()) {
-    //     animationTimer = startTimer(qsgrl_animation_interval());
-    // }
-}
-
 
 void QSGSoftwareRenderLoop::show(QQuickWindow *window)
 {
