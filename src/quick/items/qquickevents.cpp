@@ -1373,10 +1373,18 @@ QQuickPointerEvent *QQuickPointerTouchEvent::reset(QEvent *event)
         point->reset(tps.at(i), ev->timestamp());
         const auto &preserved = preserves.at(i);
         if (point->state() == QQuickEventPoint::Pressed) {
-            if (preserved.grabber)
+            if (preserved.grabber) {
                 qWarning() << "TouchPointPressed without previous release event" << point;
-            point->setGrabberItem(nullptr);
-            point->clearPassiveGrabbers();
+                if (QQuickItem *grabber = point->grabberItem()) {
+                    QQuickWindowPrivate *windowPriv = QQuickWindowPrivate::get(grabber->window());
+                    if (windowPriv->isDeliveringTouchAsMouse()) {
+                        windowPriv->cancelTouchMouseSynthesis();
+                        QQuickPointerEvent *ev = windowPriv->queryPointerEventInstance(windowPriv->touchMouseDevice);
+                        if (ev)
+                            ev->point(0)->cancelExclusiveGrab();
+                    }
+                }
+            }
         } else {
             // Restore the grabbers without notifying (don't call onGrabChanged)
             Q_ASSERT(preserved.pointId == 0 || preserved.pointId == point->pointId());
