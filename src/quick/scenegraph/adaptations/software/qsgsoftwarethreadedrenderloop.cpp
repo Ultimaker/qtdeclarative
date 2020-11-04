@@ -521,11 +521,15 @@ void QSGSoftwareRenderThread::syncAndRender()
 
         // Since there is no V-Sync with QBackingStore, throttle rendering the refresh
         // rate of the current screen the window is on.
-        int blockTime = vsyncDelta - (int) renderThrottleTimer.elapsed();
-        if (blockTime > 0) {
-            qCDebug(QSG_RASTER_LOG_RENDERLOOP, "RT - blocking for %d ms", blockTime);
-            msleep(blockTime);
-        }
+
+        // Sleep code below commented out. Because the triple buffer driver already blocks on page swap,
+        // it is harmful to sleep again here.
+
+        // int blockTime = vsyncDelta - (int) renderThrottleTimer.elapsed();
+        // if (blockTime > 0) {
+        //     qCDebug(QSG_RASTER_LOG_RENDERLOOP) <<  "RT - blocking for " << blockTime << "ms";
+        //     msleep(blockTime);
+        // }
         renderThrottleTimer.restart();
 
         wd->fireFrameSwapped();
